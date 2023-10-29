@@ -16,4 +16,3 @@ for plugin in os.listdir("allay/builtins"):
         continue
 
     all.append(plugin)
-    importlib.import_module(f"..{plugin}")

@@ -36,9 +36,11 @@ try:
 except pkg_resources.VersionConflict as exc:
     print("\n🤕 \033[31mOops, there is a problem in the dependencies.\033[0m")
     print(f"\n⚠️ \033[33m{type(exc).__name__}: {exc}\033[0m\n ")
+    print(f"\n\n Please run \"pip install -r requirements.txt\"")
 except Exception as exc: # pylint: disable=broad-exception-caught
     print("\n🤕 \033[31mOops, there is a problem in the dependencies.\033[0m")
     print(f"\n⛔ \u001b[41m\u001b[37;1m{type(exc).__name__}\033[0m: \033[31m{exc}\033[0m\n")
+    print(f"\n\n Please run \"pip install -r requirements.txt\"")
 
 # Thrid party libs ------------------------------------------------------------
 
@@ -57,7 +59,7 @@ import allay
 allay.core.BotConfig.load()
 
 # Creating client
-client = allay.core.DiscordClient(
+client = allay.core.discord.Bot(
     case_insensitive=True,
     status=discord.Status.do_not_disturb,
     beta=False,
@@ -65,66 +67,68 @@ client = allay.core.DiscordClient(
 )
 
 print(" ")
-logs.info(f"▶️ Starting Allay v{allay.core.version}...")
+logs.info(f"▶️ Starting Allay Core v{allay.core.version}...")
 print(" ")
 print(art.text2art(f"Allay v{allay.core.version}",font='small',chr_ignore=True))
 
-# Loading extensions (global system + plugins)
-async def load(bot_client, global_system_list, plugin_list):
+# On Discord Bot ready -----------------------------------------------------
+
+async def on_ready():
+
+    # Show bot informations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    logs.info(color.green("✅ Bot connected"))
+    logs.info(f"Nom : {client.user.name}")
+    logs.info(f"ID : {client.user.id}")
+
+    if len(client.guilds) < 20:
+        logs.info(f"Connected on {len(client.guilds)} server:\n - " + '\n - '.join([x.name for x in client.guilds]))
+    else:
+        logs.info(f"Connected on {len(client.guilds)} server")
+
+    # Load plugins ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     loaded = 0
     failed = 0
     notloaded = ""
-    for extension in global_system_list + plugin_list:
+
+    print(" ")
+    logs.info("🔌 Loading plugins...")
+
+    for extension in allay.builtins.all:
         try:
-            await bot_client.load_extension(extension)
+            await client.load_extension("allay.builtins." + extension)
             loaded += 1
         except Exception as exc:  # pylint: disable=broad-except
-            client.log.error(
-                "Failed to load extension: %s",
-                extension,
-                exc_info=exc,
-            )
+            logs.error(f"Failed to load extension: {extension}\n{exc}")
             notloaded += "\n - " + extension
             failed += 1
-    return loaded, failed
 
-# Printing info when the bot is started
-async def on_ready():
-    """Called when the bot is connected to Discord API"""
-    client.log.info("%s✅ Bot connected", color.fg.green)
-    client.log.info("Nom : %s", client.user.name)
-    client.log.info("ID : %i", client.user.id)
-    if len(client.guilds) < 200:
-        servers = [x.name for x in client.guilds]
-        client.log.info(
-            "Connected on %i server:\n - %s",
-            len(client.guilds),
-            "\n - ".join(servers),
-        )
-    else:
-        client.log.info("Connected on %i server", len(client.guilds))
-    loaded, failed = await load(client, allay.builtins.all, allay.plugins.all)
-    client.log.info(
-        "%i plugins loaded, %i plugins failed",
-        loaded,
-        failed,
-    )
+    for extension in allay.plugins.all:
+        try:
+            await client.load_extension("allay.plugins." + extension)
+            loaded += 1
+        except Exception as exc:  # pylint: disable=broad-except
+            logs.error(f"Failed to load extension: {extension}\n{exc}")
+            notloaded += "\n - " + extension
+            failed += 1
 
-    # Syncing slash commands
-    client.log.info("♻️ Syncing app commands...")
+    logs.info(f"{loaded} plugins loaded, {failed} plugins failed")
+    print(" ")
+
+    # Sync app commands ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    logs.info("♻️ Syncing app commands...")
     try:
         await client.tree.sync()
     except discord.DiscordException as e:
-        client.log.error("⚠️ Error while syncing app commands: %s", repr(e))
+        logs.error("⚠️ Error while syncing app commands: %s", repr(e))
     else:
-        client.log.info("✅ App commands synced")
+        logs.info("✅ App commands synced")
 
-    print(
-        "--------------------------------------------------------------------------------"
-    )
-    await client.change_presence(
-        status=discord.Status.online,
-    )
+    print("--------------------------------------------------------------------------------")
+
+    await client.change_presence(status=discord.Status.online)
     await asyncio.sleep(2)
 
     # only load plugins once
@@ -139,7 +143,7 @@ try:
         log_handler=None,
     )
 except discord.errors.LoginFailure:
-    client.log.error("⚠️ Invalid token")
+    logs.error("⚠️ Invalid token")
     allay.core.BotConfig.token_set(force_set=True)
     os.system("python3 start.py")
     exit()

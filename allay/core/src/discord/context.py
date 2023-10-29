@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-class DiscordContext(commands.Context):
+class Context(commands.Context):
     """Replacement for the official commands.Context class
     It allows us to add more methods and properties in the whole bot code"""
 

@@ -4,6 +4,7 @@ import sqlite3
 
 from allay import core
 from allay import plugins
+from allay import builtins
 
 data_model = "allay/core/data/model.sql"
 database = sqlite3.connect("allay/core/data/database.db")

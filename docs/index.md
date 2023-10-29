@@ -36,7 +36,7 @@ As Discord bot developers we noticed that there is a lot of different service bo
 
 This project has then 2 objectives:
 - On the core side, the goal is to design a system that allow to simplify as much as possible the creation of plugins, and to make them as customizable as possible.
-- On the plugin side, the goal is to create a lot of plugins that can be used by anyone, and that can be easily configured to fit the needs of the server.
+- On the plugin side, the goal is to create a lot of small bots, focused on a special feature or type of feature, that can be used by anyone and can be easily configured to fit the needs of the server.
 
 ## 📦 Current Allay Bots
 

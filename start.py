@@ -45,24 +45,24 @@ for plugin in os.listdir("./plugins/"):
 
 def print_ascii_art():
     """
-    Print GIPSY 2.0 ascii art
+    Print Allay Core 0.0.1 ascii art
     """
     # Disable some pylints warning violations in this function
     # pylint: disable=anomalous-backslash-in-string
     # pylint: disable=trailing-whitespace
     print(
         f"""{color.fg.blue}
-      ___  ____  ____  ___  _  _    __     __  
-     / __)(_  _)(  _ \/ __)( \/ )  /  )   /. | 
-    ( (_-. _)(_  )___/\__ \ \  /    )(   (_  _)
-     \___/(____)(__)  (___/ (__)   (__)()  (_)
-
+    _   _ _              ___                __   __   _ 
+   /_\ | | |__ _ _  _   / __|___ _ _ ___   /  \ /  \ / |
+  / _ \| | / _` | || | | (__/ _ \ '_/ -_) | () | () || |
+ /_/ \_\_|_\__,_|\_, |  \___\___/_| \___|  \__(_)__(_)_|
+                 |__/                                   
         {color.stop}"""
     )
 
 
 # ---------------#
-#    M A I N    #
+#    M A I N     #
 # ---------------#
 def main():
     """

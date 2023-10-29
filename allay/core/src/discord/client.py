@@ -1,58 +1,32 @@
-"""
-Ce programme est régi par la licence CeCILL soumise au droit français et
-respectant les principes de diffusion des logiciels libres. Vous pouvez
-utiliser, modifier et/ou redistribuer ce programme sous les conditions
-de la licence CeCILL diffusée sur le site "http://www.cecill.info".
-"""
 
-import json
+#==============================================================================
+# Import requirements
+#==============================================================================
+
+# Standard libs ---------------------------------------------------------------
+
 import os
 import sqlite3
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Union
 
+# Thrid party libs ------------------------------------------------------------
+
 import discord
-from discord import app_commands
 from discord.ext import commands
 
-from core import config
-from core import setup_logger
+# Project modules -------------------------------------------------------------
 
-if TYPE_CHECKING:
-    from bot.utils.sconfig import Sconfig
+from allay.core.src.discord.context import DiscordContext
+
+#==============================================================================
+# DiscordClient class
+#==============================================================================
+
+class DiscordClient(commands.bot.AutoShardedBot):
 
 
-class MyContext(commands.Context):
-    """Replacement for the official commands.Context class
-    It allows us to add more methods and properties in the whole bot code"""
 
-    @property
-    def bot_permissions(self) -> discord.Permissions:
-        """Permissions of the bot in the current context"""
-        if self.guild:
-            # message in a guild
-            return self.channel.permissions_for(self.guild.me)
-        # message in DM
-        return self.channel.permissions_for(self.bot)
-
-    @property
-    def user_permissions(self) -> discord.Permissions:
-        """Permissions of the message author in the current context"""
-        return self.channel.permissions_for(self.author)
-
-    @property
-    def can_send_embed(self) -> bool:
-        """If the bot has the right permissions to send an embed in the current context"""
-        return self.bot_permissions.embed_links
-
-# defining allowed default mentions
-ALLOWED = discord.AllowedMentions(everyone=False, roles=False)
-
-class Gunibot(commands.bot.AutoShardedBot):
-    """
-    Classe principale du bot
-    """
-
-    def __init__(self, case_insensitive=None, status=None, beta=False):
+    def __init__(self, case_insensitive=None, status=None, beta=False, database=None):
         # defining intents usage
         intents = discord.Intents.default()
         intents.message_content = True
@@ -62,20 +36,18 @@ class Gunibot(commands.bot.AutoShardedBot):
             command_prefix=self.get_prefix,
             case_insensitive=case_insensitive,
             status=status,
-            allowed_mentions=ALLOWED,
+            allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
             intents=intents,
         )
-        self.log = setup_logger('core')  # logs module
         self.beta: bool = beta  # if the bot is in beta mode
-        self.database = sqlite3.connect("data/database.db")  # database connection
+        self.database = database  # database connection
         self.database.row_factory = sqlite3.Row
         self.cog_icons = {}  # icons for cogs
-        self._update_database_structure()
         # app commands
         self.app_commands_list: Optional[list[discord.app_commands.AppCommand]] = None
 
     # pylint: disable=arguments-differ
-    async def get_context(self, message: discord.Message, *, cls=MyContext):
+    async def get_context(self, message: discord.Message, *, cls=DiscordContext):
         """
         Récupérer le contexte d'une commande
 
@@ -106,25 +78,7 @@ class Gunibot(commands.bot.AutoShardedBot):
         """
         return self.get_cog("Sconfig")
 
-    def _update_database_structure(self):
-        """
-        Mettre à jour la structure de la base de données
-
-        :return: None
-        """
-        cursor = self.database.cursor()
-        with open("data/model.sql", "r", encoding="utf-8") as file:
-            cursor.executescript(file.read())
-
-        # pylint: disable=redefined-outer-name
-        for plugin in os.listdir("./plugins/"):
-            if plugin[0] != "_":
-                if os.path.isfile("./plugins/" + plugin + "/data/model.sql"):
-                    with open(
-                        "./plugins/" + plugin + "/data/model.sql", "r", encoding="utf-8"
-                    ) as file:
-                        cursor.executescript(file.read())
-        cursor.close()
+    
 
     async def user_avatar_as(
         self,
@@ -234,7 +188,7 @@ class Gunibot(commands.bot.AutoShardedBot):
         "Populate the app_commands_list attribute from the Discord API"
         self.app_commands_list = await self.tree.fetch_commands(guild=None)
 
-    async def fetch_app_command_by_name(self, name: str) -> Optional[app_commands.AppCommand]:
+    async def fetch_app_command_by_name(self, name: str) -> Optional[discord.app_commands.AppCommand]:
         "Get a specific app command from the Discord API"
         if self.app_commands_list is None:
             await self.fetch_app_commands()
@@ -306,44 +260,3 @@ class Gunibot(commands.bot.AutoShardedBot):
                     # pylint: disable=broad-exception-caught
                     except BaseException:
                         self.log.warning("[remove_cog]", exc_info=True)
-
-
-class CheckException(commands.CommandError):
-    """
-    Exception personnalisée pour les checks
-    """
-    def __init__(self, check_id, *args):
-        super().__init__(message=f"Custom check '{check_id}' failed", *args)
-        self.id = check_id # pylint: disable=invalid-name
-
-CONFIG_OPTIONS: Dict[str, Dict[str, Any]] = {}
-
-CONFIG_OPTIONS.update(
-    {
-        "prefix": {
-            "default": config.get("bot.default_prefix"),
-            "type": "text",
-            "command": 'prefix',
-        },
-        "language": {
-            "default": config.get("bot.default_language"),
-            "type": "text",
-            "command": 'language',
-        },
-        "admins": {
-            "default": config.get("bot.admins"),
-            "type": "categories",
-            "command": None,
-        },
-    }
-)
-
-for plugin in os.listdir("./plugins/"):
-    if plugin[0] != "_":
-        if os.path.isfile("./plugins/" + plugin + "/config/options.json"):
-            with open(
-                "./plugins/" + plugin + "/config/options.json",
-                "r",
-                encoding="utf8"
-            ) as config:
-                CONFIG_OPTIONS.update(json.load(config))

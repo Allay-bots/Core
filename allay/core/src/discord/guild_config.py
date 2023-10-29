@@ -1,0 +1,4 @@
+
+class GuildConfig:
+    # TODO
+    pass

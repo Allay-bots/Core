@@ -2,4 +2,5 @@
 /client.log/
 /venv/
 /logs/
+/docs/_build/
 /config.yaml

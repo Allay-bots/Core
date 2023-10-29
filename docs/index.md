@@ -40,7 +40,7 @@ This project has then 2 objectives:
 
 ## 📦 Current Allay Bots
 
-```{include} plugins_grid.md
+```{include} bots_grid.md
 ```
 
 
@@ -56,9 +56,8 @@ If you want to contribute, please read at least the "Getting started" section in
 :caption: Info
 :hidden:
 
-getting_started
 user_guide
-developer_guide
+contribute
 faq
 changelog
 special_thanks

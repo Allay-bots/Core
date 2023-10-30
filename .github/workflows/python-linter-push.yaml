@@ -15,8 +15,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
-      - beta
+      - main
 
 jobs:
   run-linters:

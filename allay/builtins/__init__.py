@@ -9,8 +9,9 @@ import os
 path = "allay/builtins"
 all = []
 
-for plugin in os.listdir("allay/builtins"):
-    if not os.path.isdir(plugin):
+for plugin in os.listdir(path):
+
+    if not os.path.isdir(os.path.join(path, plugin)):
         continue
     if plugin.startswith("_"):
         continue

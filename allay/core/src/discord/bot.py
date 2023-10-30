@@ -13,10 +13,12 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional
 
 import discord
 from discord.ext import commands
+from LRFutils import logs
 
 # Project modules -------------------------------------------------------------
 
 from allay.core.src.discord.context import Context
+from allay.core.src.bot_config import BotConfig
 
 #==============================================================================
 # Bot class
@@ -24,12 +26,12 @@ from allay.core.src.discord.context import Context
 
 class Bot(commands.bot.AutoShardedBot):
 
-    def __init__(self, case_insensitive=None, status=None, beta=False, database=None):
-        # defining intents usage
+    def __init__(self, case_insensitive=None, status=None, database=None):
+        
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
-        # we now initialize the bot class
+        
         super().__init__(
             command_prefix=self.get_prefix,
             case_insensitive=case_insensitive,
@@ -37,12 +39,14 @@ class Bot(commands.bot.AutoShardedBot):
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
             intents=intents,
         )
-        self.beta: bool = beta  # if the bot is in beta mode
-        self.database = database  # database connection
+        
+        self.database = database
         self.database.row_factory = sqlite3.Row
-        self.cog_icons = {}  # icons for cogs
-        # app commands
+        self.cog_icons = {}
+        self.cog_display_names = {}
         self.app_commands_list: Optional[list[discord.app_commands.AppCommand]] = None
+
+    # Context -----------------------------------------------------------------
 
     # pylint: disable=arguments-differ
     async def get_context(self, message: discord.Message, *, cls=Context):
@@ -57,6 +61,8 @@ class Bot(commands.bot.AutoShardedBot):
         # subclass to the super() method, which tells the bot to
         # use the new MyContext class
         return await super().get_context(message, cls=cls)
+
+    # Server config -----------------------------------------------------------
 
     @property
     def server_configs(self):
@@ -76,7 +82,7 @@ class Bot(commands.bot.AutoShardedBot):
         """
         return self.get_cog("Sconfig")
 
-    
+    # Get use avatar ----------------------------------------------------------
 
     async def user_avatar_as(
         self,
@@ -97,26 +103,17 @@ class Bot(commands.bot.AutoShardedBot):
         else:
             return avatar.with_format("png")
 
-    class SafeDict(dict):
-        """
-        ???
-        """
-        def __missing__(self, key):
-            return "{" + key + "}"
-
     # pylint: disable=arguments-differ
-    async def get_prefix(self, msg):
+    async def get_prefix(self, bot, msg=None):
         """
         Récupérer le préfixe du bot pour un message donné
 
         :param msg: Le message
         :return: Le préfixe
         """
-        prefix = None
-        if msg.guild is not None:
-            prefix = self.server_configs[msg.guild.id]["prefix"]
-        if prefix is None:
-            prefix = "?"
+        
+        prefix = BotConfig.get("core.default_prefix")
+
         return commands.when_mentioned_or(prefix)(self, msg)
 
     def db_query(
@@ -178,7 +175,7 @@ class Bot(commands.bot.AutoShardedBot):
         """
         cog = self.get_cog('Languages')
         if cog is None:
-            self.log.error("Unable to load Languages cog")
+            logs.error("Unable to load Languages cog")
             return lambda *args, **kwargs: args[1]
         return cog.tr
 
@@ -203,11 +200,11 @@ class Bot(commands.bot.AutoShardedBot):
             return f"</{command_name}:{command.id}>"
         if command := self.get_command(command_name):
             return f"`{command.qualified_name}`"
-        self.log.error("Trying to mention invalid command: %s", command_name)
+        logs.error(f"Trying to mention invalid command: {command_name}")
         return f"`{command_name}`"
 
     # pylint: disable=arguments-differ
-    async def add_cog(self, cog: commands.Cog, icon=None):
+    async def add_cog(self, cog: commands.Cog, icon=None, display_name=None):
         """
         Ajouter un cog au bot
 
@@ -220,6 +217,7 @@ class Bot(commands.bot.AutoShardedBot):
         :raises CommandError: Une erreur est survenue lors du chargement
         """
         self.cog_icons.update({cog.qualified_name.lower(): icon})
+        self.cog_display_names.update({cog.qualified_name.lower(): display_name})
 
         await super().add_cog(cog)
         for module in self.cogs.values():
@@ -229,16 +227,16 @@ class Bot(commands.bot.AutoShardedBot):
                         module.on_anycog_load(cog)
                     # pylint: disable=broad-exception-caught
                     except BaseException:
-                        self.log.warning("[add_cog]", exc_info=True)
+                        logs.error("Error while adding a cog")
+
+    def get_cog_display_name(self, cog_name):
+        return self.cog_display_names.get(cog_name.lower())
 
     def get_cog_icon(self, cog_name):
-        """
-        Récupérer l'icône d'un cog
-
-        :param cog_name: Le nom du cog
-        :return: L'icône du cog
-        """
         return self.cog_icons.get(cog_name.lower())
+    
+    def get_cog_display_name_with_icon(self, cog_name):
+        return self.get_cog_icon(cog_name) + " " + self.get_cog_display_name(cog_name)
 
     async def remove_cog(self, cog: str):
         """
@@ -257,4 +255,4 @@ class Bot(commands.bot.AutoShardedBot):
                         module.on_anycog_unload(cog)
                     # pylint: disable=broad-exception-caught
                     except BaseException:
-                        self.log.warning("[remove_cog]", exc_info=True)
+                        logs.error("Error while removing a cog")

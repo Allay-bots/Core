@@ -9,7 +9,7 @@ import os
 path = "allay/plugins"
 all = []
 
-for plugin in os.listdir("allay/plugins"):
+for plugin in os.listdir(path):
 
     if not os.path.isdir(os.path.join(path,plugin)):
         continue

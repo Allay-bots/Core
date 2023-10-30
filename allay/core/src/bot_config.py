@@ -44,7 +44,7 @@ class BotConfig:
         config_file_exist = os.path.isfile("config.yaml")
 
         # Load config template
-        with open("allay/core/default_bot_config.yaml", "r", encoding='utf-8') as file:
+        with open("allay/core/data/default_bot_config.yaml", "r", encoding='utf-8') as file:
             BotConfig.__global_config.update(yaml.safe_load(file))
 
         # Load plugin config template

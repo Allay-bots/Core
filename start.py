@@ -128,13 +128,13 @@ async def on_ready():
 
     # Sync app commands ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # logs.info("♻️ Syncing app commands...")
-    # try:
-    #     await bot.tree.sync()
-    # except discord.DiscordException as e:
-    #     logs.error("⚠️ Error while syncing app commands: %s", repr(e))
-    # else:
-    #     logs.info("✅ App commands synced")
+    logs.info("♻️ Syncing app commands...")
+    try:
+        await bot.tree.sync()
+    except discord.DiscordException as e:
+        logs.error("⚠️ Error while syncing app commands: %s", repr(e))
+    else:
+        logs.info("✅ App commands synced")
 
     print("--------------------------------------------------------------------------------")
 

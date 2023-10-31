@@ -119,7 +119,7 @@ class Bot(commands.bot.AutoShardedBot):
     def db_query(
         self,
         query: str,
-        args: Union[tuple, dict],
+        args: Union[tuple, dict] = [],
         *,
         fetchone: bool = False,
         returnrowcount: bool = False,

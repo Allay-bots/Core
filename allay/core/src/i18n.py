@@ -44,47 +44,32 @@ for plugin in allay.plugins.all:
 # Plugin
 #==============================================================================
 
-class Languages(commands.Cog):
-    
-    def __init__(self, bot:allay.Bot):
-        self.bot = bot
-        self.file = "languages"
-        self.languages = ["fr", "en"]
-        self.config_options = ["language"]
+class I18N:
 
-    async def tr(self, ctx, key: str, **kwargs): # pylint: disable=invalid-name
+    @staticmethod
+    async def tr(ctx, key: str, **kwargs): # pylint: disable=invalid-name
         """Translate something
         Ctx can be either a Context, a guild, a guild id, a channel or a lang directly"""
-        lang = self.languages[0]
-        if isinstance(ctx, commands.Context):
-            if ctx.guild:
-                lang = await self.get_lang(ctx.guild.id, use_str=True)
-        elif isinstance(ctx, discord.Guild):
-            lang = await self.get_lang(ctx.id, use_str=True)
-        elif isinstance(ctx, discord.abc.GuildChannel):
-            lang = await self.get_lang(ctx.guild.id, use_str=True)
-        elif isinstance(ctx, str) and ctx in self.languages:
-            lang = ctx
-        elif isinstance(ctx, int):  # guild ID
-            if self.bot.get_guild(ctx):  # if valid guild
-                lang = await self.get_lang(ctx, use_str=True)
-            else:
-                lang = self.languages[0]
-        return i18n.t(key, locale=lang, **kwargs)
+        locale = await I18N.get_locale(ctx)
+        return i18n.t(key, locale=str(locale), **kwargs)
 
-    async def get_lang(self, guild_id: int, use_str: bool = False) -> int:
-        if guild_id is None:
-            as_int = 0
-        else:
-            # migration for old format
-            if isinstance(self.bot.server_configs[guild_id]["language"], int):
-                as_int = self.bot.server_configs[guild_id]["language"]
-            else:
-                as_int = self.languages.index(
-                    self.bot.server_configs[guild_id]["language"]
-                )
-        if use_str:
-            return self.languages[as_int]
-        return as_int
+    @staticmethod
+    async def get_locale(ctx):
+        if isinstance(ctx, discord.Locale):
+            return ctx
+        
+        # TODO: Consider the user locale
+        # if isinstance(ctx, discord.abc.User):
+        #     user = ctx
+        #     if isinstance(ctx, discord.Member):
+        #         for bot in allay.Bot.instances:
+        #             if (u := bot.get_user(ctx.id)) is not None:
+        #                 user = u
+        #     return user.locale
+
+        if (locale := ctx.guild.preferred_locale) is not None:
+            return locale
+        return discord.Locale.american_english
+
 
 

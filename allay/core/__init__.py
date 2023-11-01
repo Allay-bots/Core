@@ -13,6 +13,7 @@ from allay.core.src import *
 
 from allay.core.src.bot_config import BotConfig
 from allay.core.src.database import Database
+from allay.core.src.i18n import I18N
 from allay.core.src.discord import Bot
 from allay.core.src.discord import Context
 from allay.core.src.discord import GuildConfig

@@ -111,13 +111,13 @@ class Sconfig(commands.Cog):
             The new value of the config, or None to reset"""
         if value is None:
             del self.bot.server_configs[guildID][key]
-            return await self.bot._(guildID, "sconfig.option-reset", opt=key)
+            return await allay.I18N.tr(guildID, "sconfig.option-reset", opt=key)
         try:
             self.bot.server_configs[guildID][key] = value
         except ValueError:
-            return await self.bot._(guildID, "sconfig.option-notfound", opt=key)
+            return await allay.I18N.tr(guildID, "sconfig.option-notfound", opt=key)
         else:
-            return await self.bot._(guildID, "sconfig.option-edited", opt=key)
+            return await allay.I18N.tr(guildID, "sconfig.option-edited", opt=key)
 
     async def format_config(
         self, guild: discord.Guild, key: str, value: str, mention: bool = True
@@ -260,14 +260,14 @@ class Sconfig(commands.Cog):
                 await ctx.send(embeds=embeds)
 
         elif ctx.invoked_subcommand is None:
-            await ctx.send(await self.bot._(ctx.guild.id, "sconfig.option-notfound"))
+            await ctx.send(await allay.I18N.tr(ctx.guild.id, "sconfig.option-notfound"))
 
     @main_config.command(name="prefix")
     async def config_prefix(self, ctx: allay.Context, new_prefix=None):
         limit = 7
         if new_prefix is not None and len(new_prefix) > limit:
             await ctx.send(
-                await self.bot._(ctx.guild.id, "sconfig.prefix-too-long", c=limit)
+                await allay.I18N.tr(ctx.guild.id, "sconfig.prefix-too-long", c=limit)
             )
             return
         await ctx.send(await self.edit_config(ctx.guild.id, "prefix", new_prefix))
@@ -279,8 +279,8 @@ class Sconfig(commands.Cog):
         await ctx.send(await self.edit_config(ctx.guild.id, "logs_channel", channel.id))
         if logs_cog := self.bot.get_cog("Logs"):
             emb = discord.Embed(
-                title=await self.bot._(ctx.guild, "sconfig.config-enabled"),
-                description=await self.bot._(
+                title=await allay.I18N.tr(ctx.guild, "sconfig.config-enabled"),
+                description=await allay.I18N.tr(
                     ctx.guild, "sconfig.modlogs-channel-enabled"
                 ),
                 color=16098851,
@@ -297,11 +297,11 @@ class Sconfig(commands.Cog):
         elif lang == "list":  # send a list of available languages
             availabe = " - ".join(cog.languages)
             await ctx.send(
-                await self.bot._(ctx.guild.id, "sconfig.languages-list", list=availabe)
+                await allay.I18N.tr(ctx.guild.id, "sconfig.languages-list", list=availabe)
             )
         elif lang not in cog.languages:  # invalid language
             await ctx.send(
-                await self.bot._(ctx.guild.id, "sconfig.invalid-language", p=ctx.prefix)
+                await allay.I18N.tr(ctx.guild.id, "sconfig.invalid-language", p=ctx.prefix)
             )
         else:  # correct case
             await ctx.send(

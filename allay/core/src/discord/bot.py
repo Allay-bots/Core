@@ -26,6 +26,8 @@ from allay.core.src.bot_config import BotConfig
 
 class Bot(commands.bot.AutoShardedBot):
 
+    instances = []
+
     def __init__(self, case_insensitive=None, status=None, database=None):
         
         intents = discord.Intents.default()
@@ -45,6 +47,8 @@ class Bot(commands.bot.AutoShardedBot):
         self.cog_icons = {}
         self.cog_display_names = {}
         self.app_commands_list: Optional[list[discord.app_commands.AppCommand]] = None
+
+        Bot.instances.append(self)
 
     # Context -----------------------------------------------------------------
 
@@ -111,39 +115,8 @@ class Bot(commands.bot.AutoShardedBot):
         :param msg: Le message
         :return: Le préfixe
         """
-        
-        prefix = BotConfig.get("core.default_prefix")
 
-        return commands.when_mentioned_or(prefix)(self, msg)
-
-    @property
-    def _(self) -> Callable[..., Awaitable[str]]:
-        """Translate something
-        
-        :param context: The guild, channel or user for which to translate
-        :param key: The key to translate
-        :param kwargs: The arguments to pass to the translation
-
-        :return: The translated string
-        """
-        cog = self.get_cog('Languages')
-        if cog is None:
-            logs.error("Unable to load Languages cog")
-            return lambda *args, **kwargs: args[1]
-        return cog.tr
-
-    async def fetch_app_commands(self):
-        "Populate the app_commands_list attribute from the Discord API"
-        self.app_commands_list = await self.tree.fetch_commands(guild=None)
-
-    async def fetch_app_command_by_name(self, name: str) -> Optional[discord.app_commands.AppCommand]:
-        "Get a specific app command from the Discord API"
-        if self.app_commands_list is None:
-            await self.fetch_app_commands()
-        for command in self.app_commands_list:
-            if command.name == name:
-                return command
-        return None
+        return commands.when_mentioned(self, msg)
 
     async def get_command_mention(self, command_name: str):
         """

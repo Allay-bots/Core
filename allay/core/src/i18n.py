@@ -41,34 +41,25 @@ for plugin in allay.plugins.all:
         i18n.load_path.append(plugin_path)
 
 #==============================================================================
-# Plugin
+# I18N class
 #==============================================================================
 
 class I18N:
 
-    @staticmethod
-    async def tr(ctx, key: str, **kwargs): # pylint: disable=invalid-name
-        """Translate something
-        Ctx can be either a Context, a guild, a guild id, a channel or a lang directly"""
-        locale = await I18N.get_locale(ctx)
-        return i18n.t(key, locale=str(locale), **kwargs)
+    CTX_TYPE = discord.abc.User | discord.Guild | discord.abc.GuildChannel | discord.Locale | commands.Context | discord.Interaction
 
     @staticmethod
-    async def get_locale(ctx):
-        if isinstance(ctx, discord.Locale):
-            return ctx
-        
-        # TODO: Consider the user locale
-        # if isinstance(ctx, discord.abc.User):
-        #     user = ctx
-        #     if isinstance(ctx, discord.Member):
-        #         for bot in allay.Bot.instances:
-        #             if (u := bot.get_user(ctx.id)) is not None:
-        #                 user = u
-        #     return user.locale
+    async def tr(ctx:CTX_TYPE, key: str, **kwargs): # pylint: disable=invalid-name
+        return i18n.t(key, locale=str(await I18N.get_locale(ctx)), **kwargs)
 
-        if (locale := ctx.guild.preferred_locale) is not None:
-            return locale
+    @staticmethod
+    async def get_locale(ctx:CTX_TYPE) -> discord.Locale:
+        if isinstance(ctx, discord.Locale): return ctx
+        try: return ctx.locale
+        except AttributeError: pass
+        if isinstance(ctx, discord.Guild): return ctx.preferred_locale
+        try: return ctx.guild.preferred_locale
+        except AttributeError: pass
         return discord.Locale.american_english
 
 

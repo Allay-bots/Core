@@ -50,29 +50,22 @@ class I18N:
 
     @staticmethod
     def tr(ctx:CTX_TYPE, key: str, **kwargs): # pylint: disable=invalid-name
-        locale = I18N.get_locale(ctx)
-        print(locale)
-        return i18n.t(key, locale=str(locale), **kwargs)
+        return i18n.t(key, locale=str(I18N.get_locale(ctx)), **kwargs)
 
     @staticmethod
     def get_locale(ctx:CTX_TYPE) -> discord.Locale:
-
         if isinstance(ctx, discord.Locale):
             return ctx
-        
         try:
             return ctx.locale
         except AttributeError:
             pass
-
         if isinstance(ctx, discord.Guild):
             return ctx.preferred_locale
-        
         try:
             return ctx.guild.preferred_locale
         except AttributeError:
             pass
-
         return discord.Locale.american_english
 
 

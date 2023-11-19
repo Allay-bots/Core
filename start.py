@@ -16,7 +16,7 @@ de la licence CeCILL diffusée sur le site "http://www.cecill.info".
 
 import sys
 import os
-import pkg_resources
+import pkg_resources # deprecated, use importlib.resources instead
 import asyncio
 import sqlite3
 import logging
@@ -30,6 +30,7 @@ if py_version.major != 3 or py_version.minor < 10:
 
 # Check installed modules -----------------------------------------------------
 
+# TODO : update this
 with open("requirements.txt", "r", encoding='utf-8') as file:
     packages = pkg_resources.parse_requirements(file.readlines())
 try:

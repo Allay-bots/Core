@@ -37,14 +37,14 @@ class Database:
 
         # Builtins
         for builtin in allay.builtins.all_modules:
-            model = os.path.join(allay.builtins.path, builtin, "data/model.sql")
+            model = os.path.join(allay.builtins.PATH, builtin, "data/model.sql")
             if os.path.isfile(model):
                 with open(model, "r", encoding="utf-8") as file:
                     cursor.executescript(file.read())
 
         # Plugins
         for plugin in allay.plugins.all_modules:
-            model = os.path.join(allay.plugins.path, plugin, "data/model.sql")
+            model = os.path.join(allay.plugins.PATH, plugin, "data/model.sql")
             if os.path.isfile(model):
                 with open(model, "r", encoding="utf-8") as file:
                     cursor.executescript(file.read())

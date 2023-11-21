@@ -108,7 +108,7 @@ class BotConfig:
                 plugin_setup = importlib.import_module("plugins." + plugin + ".setup")
 
                 choice = input(
-                    f"\n{color.fg.blue}🔌 Do you want to configure {plugin} plugin? [Y/n]:{color.stop} "
+                f"\n{color.fg.blue}🔌 Do you want to configure {plugin} plugin? [Y/n]:{color.stop} "
                 )
 
                 if choice.lower() not in decline:

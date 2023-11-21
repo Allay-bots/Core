@@ -21,14 +21,14 @@ from .src.sconfig import *
 
 # Info ------------------------------------------------------------------------
 
-version = "0.0.1"
-icon = "🎛️"
-name = "Server Config"
+VERSION = "0.0.1"
+ICON = "🎛️"
+NAME = "Server Config"
 
 # Cog -------------------------------------------------------------------------
 
 async def setup(bot: allay.Bot):
     "Load cogs related to server configuration"
-    logs.info(f"Loading {icon} {name} v{version}...")
-    await bot.add_cog(ConfigCog(bot), icon=icon, display_name=name)
-    await bot.add_cog(Sconfig(bot), icon=icon, display_name=name)
+    logs.info(f"Loading {ICON} {NAME} v{VERSION}...")
+    await bot.add_cog(ConfigCog(bot), icon=ICON, display_name=NAME)
+    await bot.add_cog(Sconfig(bot), icon=ICON, display_name=NAME)

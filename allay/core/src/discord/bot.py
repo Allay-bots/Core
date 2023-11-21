@@ -5,9 +5,8 @@
 
 # Standard libs ---------------------------------------------------------------
 
-import os
 import sqlite3
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 
 # Thrid party libs ------------------------------------------------------------
 
@@ -15,37 +14,44 @@ import discord
 from discord.ext import commands
 from LRFutils import logs
 
+if TYPE_CHECKING:
+    from allay.builtins.server_config import Sconfig, ConfigManager
+
 # Project modules -------------------------------------------------------------
 
 from allay.core.src.discord.context import Context
-from allay.core.src.bot_config import BotConfig
 
 #==============================================================================
 # Bot class
 #==============================================================================
 
 class Bot(commands.bot.AutoShardedBot):
+    "Custom class for our bot"
 
     instances = []
 
-    def __init__(self, case_insensitive=None, status=None, database=None):
-        
+    def __init__(
+            self,
+            database: sqlite3.Connection,
+            case_insensitive: Optional[bool] = None,
+            status: Optional[discord.Status] = None,
+        ):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
-        
+
         super().__init__(
-            command_prefix=self.get_prefix,
+            command_prefix=lambda bot, msg: self.get_prefix(msg),
             case_insensitive=case_insensitive,
             status=status,
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
             intents=intents,
         )
-        
+
         self.database = database
         self.database.row_factory = sqlite3.Row
-        self.cog_icons = {}
-        self.cog_display_names = {}
+        self.cog_icons: dict[str, Optional[str]] = {}
+        self.cog_display_names: dict[str, Optional[str]] = {}
         self.app_commands_list: Optional[list[discord.app_commands.AppCommand]] = None
 
         Bot.instances.append(self)
@@ -69,13 +75,13 @@ class Bot(commands.bot.AutoShardedBot):
     # Server config -----------------------------------------------------------
 
     @property
-    def server_configs(self):
+    def server_configs(self) -> "ConfigManager":
         """
         Récupérer la configuration du serveur
 
         :return: La configuration du serveur
         """
-        return self.get_cog("ConfigCog").conf_manager
+        return self.get_cog("ConfigCog").conf_manager # type: ignore
 
     @property
     def sconfig(self) -> "Sconfig":
@@ -84,7 +90,7 @@ class Bot(commands.bot.AutoShardedBot):
 
         :return: Le gestionnaire de configuration du serveur
         """
-        return self.get_cog("Sconfig")
+        return self.get_cog("Sconfig") # type: ignore
 
     # Get use avatar ----------------------------------------------------------
 
@@ -104,19 +110,33 @@ class Bot(commands.bot.AutoShardedBot):
         avatar = user.display_avatar.with_size(size)
         if avatar.is_animated():
             return avatar.with_format("gif")
-        else:
-            return avatar.with_format("png")
+        return avatar.with_format("png")
 
-    # pylint: disable=arguments-differ
-    async def get_prefix(self, bot, msg=None):
+    async def get_prefix(self, _msg: discord.Message):
         """
-        Récupérer le préfixe du bot pour un message donné
+        Retrieves the prefix the bot is listening to (only the bot mention here)
 
-        :param msg: Le message
-        :return: Le préfixe
+        :param msg: The context message
+        :return: A list of usable prefixes
         """
+        if self.user is None:
+            return []
+        return [f'<@{self.user.id}> ', f'<@!{self.user.id}> ']
 
-        return commands.when_mentioned(self, msg)
+    async def fetch_app_commands(self):
+        "Populate the app_commands_list attribute from the Discord API"
+        self.app_commands_list = await self.tree.fetch_commands()
+
+    async def fetch_app_command_by_name(self, name: str):
+        "Get a specific app command from the Discord API"
+        if self.app_commands_list is None:
+            await self.fetch_app_commands()
+        if self.app_commands_list is None:
+            raise RuntimeError("App commands list is still None")
+        for command in self.app_commands_list:
+            if command.name == name:
+                return command
+        return None
 
     async def get_command_mention(self, command_name: str):
         """
@@ -130,7 +150,8 @@ class Bot(commands.bot.AutoShardedBot):
         return f"`{command_name}`"
 
     # pylint: disable=arguments-differ
-    async def add_cog(self, cog: commands.Cog, icon=None, display_name=None):
+    async def add_cog(self, cog: commands.Cog, icon: Optional[str] = None,
+                      display_name: Optional[str] = None):
         """
         Ajouter un cog au bot
 
@@ -150,19 +171,25 @@ class Bot(commands.bot.AutoShardedBot):
             if not isinstance(cog, type(module)):
                 if hasattr(module, "on_anycog_load"):
                     try:
-                        module.on_anycog_load(cog)
+                        module.on_anycog_load(cog) # type: ignore
                     # pylint: disable=broad-exception-caught
-                    except BaseException:
-                        logs.error("Error while adding a cog")
+                    except BaseException as err:
+                        logs.error(f"Error while calling on_anycog_load: {err}")
 
-    def get_cog_display_name(self, cog_name):
-        return self.cog_display_names.get(cog_name.lower())
+    def get_cog_display_name(self, cog_id: str):
+        "Get the display name of a given cog"
+        return self.cog_display_names.get(cog_id.lower())
 
-    def get_cog_icon(self, cog_name):
-        return self.cog_icons.get(cog_name.lower())
-    
-    def get_cog_display_name_with_icon(self, cog_name):
-        return self.get_cog_icon(cog_name) + " " + self.get_cog_display_name(cog_name)
+    def get_cog_icon(self, cog_id: str):
+        "Get the icon of a given cog"
+        return self.cog_icons.get(cog_id.lower())
+
+    def get_cog_display_name_with_icon(self, cog_id):
+        "Get the display name of a given cog with its icon"
+        name = self.get_cog_display_name(cog_id) or cog_id
+        if icon := self.get_cog_icon(cog_id):
+            return icon + " " + name
+        return name
 
     async def remove_cog(self, cog: str):
         """
@@ -178,7 +205,7 @@ class Bot(commands.bot.AutoShardedBot):
             if not isinstance(cog, type(module)):
                 if hasattr(module, "on_anycog_unload"):
                     try:
-                        module.on_anycog_unload(cog)
+                        module.on_anycog_unload(cog) # type: ignore
                     # pylint: disable=broad-exception-caught
-                    except BaseException:
-                        logs.error("Error while removing a cog")
+                    except BaseException as err:
+                        logs.error(f"Error while calling on_anycog_unload: {err}")

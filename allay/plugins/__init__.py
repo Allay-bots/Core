@@ -1,19 +1,18 @@
 
 # Standard libs ---------------------------------------------------------------
 
-import importlib
 import os
 
 # Modules ---------------------------------------------------------------------
 
-path = "allay/plugins"
-all = []
+PATH = "allay/plugins"
+all_modules: list[str] = []
 
-for plugin in os.listdir(path):
+for plugin in os.listdir(PATH):
 
-    if not os.path.isdir(os.path.join(path,plugin)):
+    if not os.path.isdir(os.path.join(PATH,plugin)):
         continue
     if plugin.startswith("_"):
         continue
 
-    all.append(plugin)
+    all_modules.append(plugin)

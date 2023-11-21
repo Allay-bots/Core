@@ -41,7 +41,7 @@ class Bot(commands.bot.AutoShardedBot):
         intents.members = True
 
         super().__init__(
-            command_prefix=self.get_prefix,
+            command_prefix=lambda bot, msg: self.get_prefix(msg),
             case_insensitive=case_insensitive,
             status=status,
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
@@ -112,16 +112,16 @@ class Bot(commands.bot.AutoShardedBot):
             return avatar.with_format("gif")
         return avatar.with_format("png")
 
-    # pylint: disable=arguments-differ
-    async def get_prefix(self, _bot, msg: discord.Message):
+    async def get_prefix(self, _msg: discord.Message):
         """
-        Récupérer le préfixe du bot pour un message donné
+        Retrieves the prefix the bot is listening to (only the bot mention here)
 
-        :param msg: Le message
-        :return: Le préfixe
+        :param msg: The context message
+        :return: A list of usable prefixes
         """
-
-        return commands.when_mentioned(self, msg)
+        if self.user is None:
+            return []
+        return [f'<@{self.user.id}> ', f'<@!{self.user.id}> ']
 
     async def fetch_app_commands(self):
         "Populate the app_commands_list attribute from the Discord API"

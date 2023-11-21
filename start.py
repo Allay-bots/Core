@@ -44,6 +44,6 @@ try:
     )
 except discord.errors.LoginFailure:
     logs.error("⚠️ Invalid token")
-    allay.core.bot_config.token_set(force_set=True)
+    allay.core.BotConfig.token_set(force_set=True)
     os.system("python3 start.py")
     sys.exit()

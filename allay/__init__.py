@@ -8,7 +8,6 @@ from allay import core
 
 from allay.core import Bot
 from allay.core import BotConfig
-from allay.core import checks
 from allay.core import Context
 from allay.core import Database
 from allay.core import GuildConfig
@@ -20,7 +19,6 @@ __all__ = [
     "core",
     "Bot",
     "BotConfig",
-    "checks",
     "Context",
     "Database",
     "GuildConfig",

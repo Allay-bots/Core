@@ -13,7 +13,6 @@ from allay.core.src import bot_config, database, discord, i18n
 
 from allay.core.src.discord import Bot
 from allay.core.src.bot_config import BotConfig
-from allay.core.src.discord import checks
 from allay.core.src.discord import Context
 from allay.core.src.database import Database
 from allay.core.src.discord import GuildConfig
@@ -27,7 +26,6 @@ __all__ = [
 
     "Bot",
     "BotConfig",
-    "checks",
     "Context",
     "Database",
     "GuildConfig",

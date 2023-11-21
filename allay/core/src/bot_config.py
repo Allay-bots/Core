@@ -69,7 +69,7 @@ class BotConfig:
 
 
     # Setup -------------------------------------------------------------------
-    
+
     @staticmethod
     def setup():
         # TODO
@@ -167,15 +167,6 @@ def advanced_setup():
             print(f"{color.fg.red}🌐 Invalid language.{color.stop}")
     if lang != "":
         __global_config["bot"]["default_language"] = lang.lower()
-
-    # Prefix
-
-    prefix = __global_config["bot"]["default_prefix"]
-    choice = input(
-        f"\n{color.fg.blue}⚜️ Choose the bot command prefix? (current: {prefix}):{color.stop} "
-    )
-    if choice != "":
-        __global_config["bot"]["default_prefix"] = choice
 
     # Admins
 

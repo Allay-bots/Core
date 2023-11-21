@@ -14,9 +14,9 @@ def instanciate_bot():
     allay.Database.load()
 
     bot = Bot(
+        database=allay.Database.database,
         case_insensitive=True,
         status=discord.Status.do_not_disturb,
-        database=allay.Database.database,
     )
 
     print(" ")

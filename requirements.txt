@@ -1,14 +1,14 @@
-psutil
 aiohttp
-gitpython >= 3.1.8
-python-i18n
-pyyaml
+art==6.1
+async-timeout >= 3.0
+discord.py ~= 2.3.2
 emoji >= 2.0
 feedparser >= 6.0
-python-twitter >= 3.5
-async-timeout >= 3.0
-numpy
-discord.py ~= 2.3.2
+gitpython >= 3.1.8
 lrfutils == 0.1.2
-art==6.1
+numpy
 packaging
+psutil
+python-i18n
+python-twitter >= 3.5
+pyyaml

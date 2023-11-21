@@ -6,14 +6,16 @@
 # Standard libs ---------------------------------------------------------------
 
 import sqlite3
-from typing import Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 
 # Thrid party libs ------------------------------------------------------------
 
 import discord
 from discord.ext import commands
 from LRFutils import logs
-from allay.builtins.server_config import Sconfig, ConfigManager
+
+if TYPE_CHECKING:
+    from allay.builtins.server_config import Sconfig, ConfigManager
 
 # Project modules -------------------------------------------------------------
 

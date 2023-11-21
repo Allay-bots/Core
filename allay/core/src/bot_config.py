@@ -129,7 +129,7 @@ class BotConfig:
         """Check if the token is set, if not, ask for it. Return True if the token is set,
         False if not."""
 
-        if BotConfig.__global_config["bot"].get("token") is not None and not force_set:
+        if BotConfig.get("core.token") is not None and not force_set:
             choice = input(
                 f"\n🔑 {color.fg.blue}A token is already set."\
                     f"Do you want to edit it? [y/N]:{color.stop} "
@@ -151,7 +151,7 @@ class BotConfig:
             if token == "":
                 print(f"\n{color.fg.red}🔑 You need to set a token.{color.stop}")
             else:
-                BotConfig.__global_config["bot"]["token"] = token
+                BotConfig.__global_config["core"]["token"] = token
 
         BotConfig.save()
 
@@ -175,7 +175,7 @@ class BotConfig:
             if choice != "":
                 admins = choice.replace(" ", "").split(",")
                 try:
-                    BotConfig.__global_config["bot"]["admins"] = [
+                    BotConfig.__global_config["core"]["admins"] = [
                         int(admin_id) for admin_id in admins
                     ]
                 except ValueError:
@@ -196,7 +196,7 @@ class BotConfig:
             if choice != "":
                 try:
                     channel = int(choice)
-                    BotConfig.__global_config["bot"]["error_channels"] = channel
+                    BotConfig.__global_config["core"]["error_channels"] = channel
                 except ValueError:
                     print(
                         f"{color.fg.red}🤕 Invalid entry. Only channel ID (integers) are expected."\

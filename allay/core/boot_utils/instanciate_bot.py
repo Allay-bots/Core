@@ -11,6 +11,10 @@ from allay.core.src.discord import Bot
 def instanciate_bot():
     "Create the bot instance and returns it"
     allay.BotConfig.load()
+    # check if a token is set
+    if allay.BotConfig.get("core.token") is None:
+        allay.core.BotConfig.token_set(force_set=True)
+
     allay.Database.load()
 
     bot = Bot(

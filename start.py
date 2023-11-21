@@ -39,11 +39,11 @@ bot = instanciate_bot()
 # Launch bot
 try:
     bot.run(
-        allay.core.BotConfig.get("core.token"),
+        allay.BotConfig.get("core.token"),
         log_handler=logging.StreamHandler(sys.stdout)
     )
 except discord.errors.LoginFailure:
     logs.error("⚠️ Invalid token")
-    allay.core.BotConfig.token_set(force_set=True)
+    allay.BotConfig.token_set(force_set=True)
     os.system("python3 start.py")
     sys.exit()

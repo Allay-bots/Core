@@ -6,3 +6,5 @@ _build/
 /logs/
 /config.yaml
 /.vscode/
+allay/plugins/
+.DS_Store

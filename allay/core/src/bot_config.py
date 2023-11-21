@@ -163,19 +163,6 @@ class BotConfig:
     def advanced_setup():
         "Ask the user to set the bot admins and the error channel to use."
 
-        # Language
-
-        lang = "Baguette de fromage"
-        language = BotConfig.__global_config["bot"]["default_language"]
-        while lang.lower() not in ["en", "fr", ""]:
-            lang = input(
-                f"\n{color.fg.blue}🌐 Choose your language [en/fr] (current: {language}):{color.stop} "
-            )
-            if lang.lower() not in ["en", "fr", ""]:
-                print(f"{color.fg.red}🌐 Invalid language.{color.stop}")
-        if lang != "":
-            BotConfig.__global_config["bot"]["default_language"] = lang.lower()
-
         # Admins
 
         error = True

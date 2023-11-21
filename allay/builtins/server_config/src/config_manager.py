@@ -32,7 +32,7 @@ class ConfigOption(TypedDict):
     "Represents a configuration option definition"
     default: Any
     type: Literal[
-        "roles", "channels", "categories", "text", "emojis", "modlogsFlags", "int"
+        "roles", "channels", "categories", "text", "emojis", "int"
     ]
     command: Optional[str]
 
@@ -46,11 +46,6 @@ CONFIG_OPTIONS: dict[str, ConfigOption] = {}
 
 CONFIG_OPTIONS.update(
     {
-        "language": {
-            "default": allay.BotConfig.get("core.default_language"),
-            "type": "text",
-            "command": 'language',
-        },
         "admins": {
             "default": allay.BotConfig.get("core.admins"),
             "type": "categories",

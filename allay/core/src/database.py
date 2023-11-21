@@ -55,7 +55,7 @@ class Database:
     @staticmethod
     def query(
         query: str,
-        args: Optional[Union[tuple, dict]],
+        args: Optional[Union[tuple, dict]] = None,
         *,
         fetchone: Literal[True],
         returnrowcount: bool = False,
@@ -67,7 +67,7 @@ class Database:
     @staticmethod
     def query(
         query: str,
-        args: Optional[Union[tuple, dict]],
+        args: Optional[Union[tuple, dict]] = None,
         *,
         fetchone: Literal[True],
         returnrowcount: bool = False,
@@ -79,7 +79,7 @@ class Database:
     @staticmethod
     def query(
         query: str,
-        args: Optional[Union[tuple, dict]],
+        args: Optional[Union[tuple, dict]] = None,
         *,
         fetchone: bool = False,
         returnrowcount: bool = False,
@@ -91,7 +91,7 @@ class Database:
     @staticmethod
     def query(
         query: str,
-        args: Optional[Union[tuple, dict]],
+        args: Optional[Union[tuple, dict]] = None,
         *,
         fetchone: bool = False,
         returnrowcount: bool = False,
@@ -102,7 +102,7 @@ class Database:
     @staticmethod
     def query(
         query: str,
-        args: Optional[Union[tuple, dict]],
+        args: Optional[Union[tuple, dict]] = None,
         *,
         fetchone: bool = False,
         returnrowcount: bool = False,

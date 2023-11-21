@@ -13,7 +13,7 @@ from typing import Optional, Union
 import discord
 from discord.ext import commands
 from LRFutils import logs
-from allay.builtins.server_config import Sconfig, ConfigCog
+from allay.builtins.server_config import Sconfig, ConfigManager
 
 # Project modules -------------------------------------------------------------
 
@@ -73,7 +73,7 @@ class Bot(commands.bot.AutoShardedBot):
     # Server config -----------------------------------------------------------
 
     @property
-    def server_configs(self) -> "ConfigCog.ConfigManager":
+    def server_configs(self) -> "ConfigManager":
         """
         Récupérer la configuration du serveur
 

@@ -11,45 +11,36 @@ de la licence CeCILL diffusée sur le site "http://www.cecill.info".
 
 # Standard libs ---------------------------------------------------------------
 
-from typing import Any, List, Union
-from json import dump, load
+from typing import Any, Optional, Sequence
 
 # Third party libs ------------------------------------------------------------
 
-import emoji
 import discord
+import emoji
 from discord.ext import commands
 
 # Project modules -------------------------------------------------------------
 
 import allay
-from .config_manager import CONFIG_OPTIONS
 
-#==============================================================================
-# Global data
-#==============================================================================
+# pylint: disable=relative-beyond-top-level
+from .config_manager import CONFIG_OPTIONS, ConfigOption
 
-SERVER_CONFIG = None
 
 #==============================================================================
 # Plugin
 #==============================================================================
 
 class Sconfig(commands.Cog):
-    def __init__(self, bot:allay.Bot):
-        global SERVER_CONFIG
-        SERVER_CONFIG = self
+    "Allow guild admins to edit the bot configuration in their server"
+
+    def __init__(self, bot: allay.Bot):
         self.bot = bot
         self.file = "sconfig"
-        self.sorted_options = dict()  # config options sorted by cog
-        self.config_options = ["prefix"]
+        self.sorted_options: dict[str, dict[str, ConfigOption]] = {}  # config options sorted by cog
+        self.config_options: list[str] = []
         for cog in bot.cogs.values():
-            if not hasattr(cog, "config_options"):
-                # if the cog doesn't have any specific config
-                continue
-            self.sorted_options[cog.__cog_name__] = {
-                k: v for k, v in CONFIG_OPTIONS.items() if k in cog.config_options
-            }
+            self._add_options_from_cog(cog)
         # for whatever reason, the for loop above doesn't include its own cog,
         # so we just force it
         self.sorted_options[self.__cog_name__] = {
@@ -63,20 +54,12 @@ class Sconfig(commands.Cog):
         -----------
         cog: :class:`commands.Cog`
             The cog which got enabled"""
-        if not hasattr(cog, "config_options"):
-            # if the cog doesn't have any specific config
-            return
-        self.sorted_options[cog.__cog_name__] = {
-            k: v for k, v in CONFIG_OPTIONS.items() if k in cog.config_options
-        }
+        self._add_options_from_cog(cog)
         for opt in self.sorted_options[cog.__cog_name__].values():
             # we enable the commands if needed
-            if "command" in opt:
-                try:
-                    self.bot.get_command("config " + opt["command"]).enabled = True
-                except AttributeError:
-                    # if the command doesn't exist
-                    pass
+            if (command_name := opt.get("command")) and (
+                command := self.bot.get_command("config " + command_name)):
+                command.enabled = True
 
     def on_anycog_unload(self, cog: str):
         """Used to disable config commands when a cog is disabled
@@ -88,20 +71,28 @@ class Sconfig(commands.Cog):
         if cog in self.sorted_options:
             for opt in self.sorted_options[cog].values():
                 # we disable the commands if needed
-                if "command" in opt:
-                    try:
-                        self.bot.get_command("config " + opt["command"]).enabled = False
-                    except (AttributeError, TypeError): # if opt["command"] is None
-                        # if the command doesn't exist
-                        pass
+                if (command_name := opt.get("command")) and (
+                    command := self.bot.get_command("config " + command_name)):
+                    command.enabled = True
             del self.sorted_options[cog]
 
-    async def edit_config(self, guildID: int, key: str, value: Any):
+    def _add_options_from_cog(self, cog: commands.Cog):
+        "Append the cog-related configuration to the config options"
+        if not hasattr(cog, "config_options"):
+            # if the cog doesn't have any specific config
+            return
+        if not isinstance(cog.config_options, dict): # type: ignore
+            raise TypeError("config_options must be a dict of config_name -> ConfigOption")
+        self.sorted_options[cog.__cog_name__] = {
+            k: v for k, v in CONFIG_OPTIONS.items() if k in cog.config_options # type: ignore
+        }
+
+    async def edit_config(self, guild_id: int, key: str, value: Any):
         """Edit or reset a config option for a guild
 
         Parameters
         -----------
-        guildID: :class:`int`
+        guild_id: :class:`int`
             The ID of the concerned guild
 
         key: :class:`str`
@@ -110,23 +101,23 @@ class Sconfig(commands.Cog):
         value: :class:`Any`
             The new value of the config, or None to reset"""
         if value is None:
-            del self.bot.server_configs[guildID][key]
-            return allay.I18N.tr(guildID, "sconfig.option-reset", opt=key)
+            del self.bot.server_configs[guild_id][key]
+            return allay.I18N.tr(guild_id, "sconfig.option-reset", opt=key)
         try:
-            self.bot.server_configs[guildID][key] = value
+            self.bot.server_configs[guild_id][key] = value
         except ValueError:
-            return allay.I18N.tr(guildID, "sconfig.option-notfound", opt=key)
-        else:
-            return allay.I18N.tr(guildID, "sconfig.option-edited", opt=key)
+            return allay.I18N.tr(guild_id, "sconfig.option-notfound", opt=key)
+        return allay.I18N.tr(guild_id, "sconfig.option-edited", opt=key)
 
-    async def format_config(
-        self, guild: discord.Guild, key: str, value: str, mention: bool = True
-    ) -> str:
+    async def format_config(self, guild: discord.Guild, key: str,
+                            value: int | str | list[int] | list[str] | bool,
+                            mention: bool = True) -> Optional[str]:
+        "Format a configuration value in a nice human-readable string"
         if value is None:
             return None
         config = CONFIG_OPTIONS[key]
 
-        def getname(x):
+        def getname(x: discord.Role | discord.abc.GuildChannel):
             return x.mention if mention else x.name
 
         sep = " " if mention else " | "
@@ -134,56 +125,48 @@ class Sconfig(commands.Cog):
             if value in (None, "none", "any"):
                 return str(value).capitalize()
         if config["type"] == "roles":
-            value = [value] if isinstance(value, int) else value
-            roles = [guild.get_role(x) for x in value]
+            if not isinstance(value, list) or not all(isinstance(x, int) for x in value):
+                raise ValueError("Invalid value for roles config")
+            roles = [guild.get_role(int(x)) for x in value]
             roles = [getname(x) for x in roles if x is not None]
             return sep.join(roles)
         if config["type"] == "channels":
-            value = [value] if isinstance(value, int) else value
-            channels = [guild.get_channel(x) for x in value]
+            if not isinstance(value, list) or not all(isinstance(x, int) for x in value):
+                raise ValueError("Invalid value for roles config")
+            channels = [guild.get_channel(int(x)) for x in value]
             channels = [getname(x) for x in channels if x is not None]
             return sep.join(channels)
         if config["type"] == "categories":
-            value = [value] if isinstance(value, int) else value
-            categories = [guild.get_channel(x) for x in value]
+            if not isinstance(value, list) or not all(isinstance(x, int) for x in value):
+                raise ValueError("Invalid value for roles config")
+            categories = [guild.get_channel(int(x)) for x in value]
             categories = [x.name for x in categories if x is not None]
             return " | ".join(categories)
-        if config["type"] == "duration":
-            return await self.bot.get_cog("TimeCog").time_delta(
-                value, lang="fr", year=True, precision=0
-            )
         if config["type"] == "emojis":
 
-            def emojis_convert(
-                s_emoji: str, bot_emojis: List[discord.Emoji]
-            ) -> Union[str, discord.Emoji]:
+            def emojis_convert(s_emoji: str, bot_emojis: Sequence[discord.Emoji]) -> str:
                 if s_emoji.isnumeric():
-                    d_em = discord.utils.get(bot_emojis, id=int(s_emoji))
-                    if d_em is None:
-                        return ":deleted_emoji:"
-                    else:
+                    if d_em := discord.utils.get(bot_emojis, id=int(s_emoji)):
                         return f":{d_em.name}:"
+                    return ":deleted_emoji:"
                 return emoji.emojize(s_emoji, language="alias")
 
-            value = [value] if isinstance(value, str) else value
-            return " ".join([emojis_convert(x, self.bot.emojis) for x in value])
-        if config["type"] == "modlogsFlags":
-            flags = self.bot.get_cog("ConfigCog").LogsFlags().int_to_flags(value)
-            return " - ".join(flags) if len(flags) > 0 else None
-        if config["type"] == "language":
-            cog = self.bot.get_cog("Languages")
-            if cog:
-                return cog.languages[value]
-            return value
+            if not isinstance(value, list) or not all(isinstance(x, str) for x in value):
+                raise ValueError("Invalid value for roles config")
+            return " ".join(emojis_convert(str(x), self.bot.emojis) for x in value)
         if config["type"] == "int":
-            return value
-        return value
+            if not isinstance(value, int):
+                raise ValueError("Invalid value for int config")
+            return str(value)
+        return str(value)
 
     @commands.group(name="config")
     @commands.guild_only()
-    @commands.check(allay.checks.is_admin)
+    @commands.has_guild_permissions(administrator=True)
     async def main_config(self, ctx: allay.Context):
         """Edit your server configuration"""
+        if ctx.guild is None: # type guard (shouldn't happen)
+            return
         if ctx.subcommand_passed is None:
             # get the server config
             config = ctx.bot.server_configs[ctx.guild.id]
@@ -232,7 +215,7 @@ class Sconfig(commands.Cog):
                     )
 
                 if hasattr(self.bot.get_cog(module), "_create_config"):
-                    for extra in await self.bot.get_cog(module)._create_config(ctx): # pylint: disable=protected-access
+                    for extra in await self.bot.get_cog(module)._create_config(ctx): # type: ignore # pylint: disable=protected-access
                         module_config += (
                             (f"[{extra[0]}]").ljust(max_key_length)
                             + f" {extra[1]}".ljust(max_value_length)
@@ -261,49 +244,3 @@ class Sconfig(commands.Cog):
 
         elif ctx.invoked_subcommand is None:
             await ctx.send(allay.I18N.tr(ctx.guild.id, "sconfig.option-notfound"))
-
-    @main_config.command(name="prefix")
-    async def config_prefix(self, ctx: allay.Context, new_prefix=None):
-        limit = 7
-        if new_prefix is not None and len(new_prefix) > limit:
-            await ctx.send(
-                allay.I18N.tr(ctx.guild.id, "sconfig.prefix-too-long", c=limit)
-            )
-            return
-        await ctx.send(await self.edit_config(ctx.guild.id, "prefix", new_prefix))
-
-    @main_config.command(name="logs_channel")
-    async def config_logs_channel(
-        self, ctx: allay.Context, *, channel: discord.TextChannel
-    ):
-        await ctx.send(await self.edit_config(ctx.guild.id, "logs_channel", channel.id))
-        if logs_cog := self.bot.get_cog("Logs"):
-            emb = discord.Embed(
-                title=allay.I18N.tr(ctx.guild, "sconfig.config-enabled"),
-                description=allay.I18N.tr(
-                    ctx.guild, "sconfig.modlogs-channel-enabled"
-                ),
-                color=16098851,
-            )
-            await logs_cog.send_embed(ctx.guild, emb)
-
-    @main_config.command(name="language", aliases=["lang"])
-    async def language(self, ctx: allay.Context, lang: str):
-        """Change the bot language in your server
-        Use the 'list' option to get the available languages"""
-        cog = self.bot.get_cog("Languages")
-        if not cog:  # if cog not loaded
-            await ctx.send("Unable to load languages, please try again later")
-        elif lang == "list":  # send a list of available languages
-            availabe = " - ".join(cog.languages)
-            await ctx.send(
-                allay.I18N.tr(ctx.guild.id, "sconfig.languages-list", list=availabe)
-            )
-        elif lang not in cog.languages:  # invalid language
-            await ctx.send(
-                allay.I18N.tr(ctx.guild.id, "sconfig.invalid-language", p=ctx.prefix)
-            )
-        else:  # correct case
-            await ctx.send(
-                await self.edit_config(ctx.guild.id, "language", lang)
-            ) # lang should be a string

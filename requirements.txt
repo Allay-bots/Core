@@ -7,8 +7,8 @@ emoji >= 2.0
 feedparser >= 6.0
 python-twitter >= 3.5
 async-timeout >= 3.0
-argparse
 numpy
 discord.py ~= 2.3.2
 lrfutils == 0.1.2
 art==6.1
+packaging

@@ -1,9 +1,13 @@
+import os
 import sys
 
-import pkg_resources  # deprecated, use importlib.resources instead
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.version import Version
+
+from allay.plugins import all_modules
 
 
-def check_requirements():
+def check_requirements(print_debug: bool = False):
     "Check Python version and installed libs"
 
     # Check python version --------------------------------------------------------
@@ -14,16 +18,67 @@ def check_requirements():
 
     # Check installed modules -----------------------------------------------------
 
-    # TODO : update this
-    with open("requirements.txt", "r", encoding='utf-8') as file:
-        packages = pkg_resources.parse_requirements(file.readlines())
-    try:
-        pkg_resources.working_set.resolve(packages)
-    except pkg_resources.VersionConflict as exc:
-        print("\n🤕 \033[31mOops, there is a problem in the dependencies.\033[0m")
-        print(f"\n⚠️ \033[33m{type(exc).__name__}: {exc}\033[0m\n ")
+    core_requirements = _get_requirements_from_file("requirements.txt")
+    if not _check_requirements_versions(core_requirements, print_debug=print_debug):
         print("\n\n Please run \"pip install -r requirements.txt\"")
-    except Exception as exc: # pylint: disable=broad-exception-caught
-        print("\n🤕 \033[31mOops, there is a problem in the dependencies.\033[0m")
-        print(f"\n⛔ \u001b[41m\u001b[37;1m{type(exc).__name__}\033[0m: \033[31m{exc}\033[0m\n")
-        print("\n\n Please run \"pip install -r requirements.txt\"")
+        sys.exit(1)
+    all_plugins_satisfied = True
+    for plugin_requirements_file in _get_plugins_requirements_files():
+        plugin_requirements = _get_requirements_from_file(plugin_requirements_file)
+        if not _check_requirements_versions(plugin_requirements, print_debug=print_debug):
+            all_plugins_satisfied = False
+            print(f"\n Please run \"pip install -r {plugin_requirements_file}\"")
+    if not all_plugins_satisfied:
+        sys.exit(1)
+    elif not print_debug:
+        print("✅ \033[32mAll requirements are correctly installed.\033[0m")
+
+def _get_plugins_requirements_files():
+    "Get the relative path of all plugin requirements"
+    requirements_files: list[str] = []
+    for plugin in all_modules:
+        path = f"allay/plugins/{plugin}/requirements.txt"
+        if os.path.isfile(path):
+            requirements_files.append(path)
+    return requirements_files
+
+def _get_requirements_from_file(filepath: str):
+    "Get a list of requirements from a given requirements.txt file"
+    requirements: list[Requirement] = []
+    with open(filepath, "r", encoding="utf8") as file:
+        for line in file.readlines():
+            try:
+                requirements.append(Requirement(line))
+            except InvalidRequirement:
+                print(f"⚠️ \033[33mInvalid requirement: {line}\033[0m")
+    return requirements
+
+def _check_requirements_versions(requirements: list[Requirement], print_debug: bool = False):
+    "Check if the requirements are correctly installed"
+    # list installed packages
+    lst = os.popen('pip list --format=freeze')
+    pack_list = lst.read().split("\n")
+    # map installed packages to their parsed version
+    packages_map: dict[str, Version] = {}
+    for pack in pack_list:
+        if not pack.strip():
+            continue
+        pack_name, raw_version = pack.split("==")
+        packages_map[pack_name.lower()] = Version(raw_version)
+    # check if requirements are installed
+    all_satisfied = True
+    for req in requirements:
+        req_name = req.name.lower()
+        if req_name not in packages_map:
+            print(f"⚠️ \033[33m{req_name} is not installed.\033[0m")
+            all_satisfied = False
+            continue
+        if req.specifier.contains(packages_map[req_name]):
+            if print_debug:
+                print(f"✅ \033[32m{req_name} is correctly installed.\033[0m")
+        else:
+            print(f"⚠️ \033[33m{req_name} is not correctly installed.\033[0m")
+            print(f"\t\033[33m{req_name} {req.specifier} is required.\033[0m")
+            print(f"\t\033[33m{req_name} {packages_map[req_name]} is installed.\033[0m")
+            all_satisfied = False
+    return all_satisfied

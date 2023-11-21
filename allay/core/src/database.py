@@ -3,13 +3,9 @@
 # Requirements
 #================================================================================
 
-# Standard libs ---------------------------------------------------------------
-
 import os
 import sqlite3
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional, Union
-
-# Modules ---------------------------------------------------------------------
+from typing import Literal, Optional, Union, overload
 
 import allay
 
@@ -18,18 +14,21 @@ import allay
 #==============================================================================
 
 class Database:
+    """
+    Handle the connection to our SQLite database
+    """
 
-    
+    # Create the /data folder if it doesn't exist
     if not os.path.isdir("data"):
         os.mkdir("data")
-    
+
     database = sqlite3.connect("data/database.db")
 
     # Load --------------------------------------------------------------------
 
     @staticmethod
     def load():
-
+        "Load model files from installed plugins and builtins"
         cursor = Database.database.cursor()
 
         # Core
@@ -52,34 +51,82 @@ class Database:
 
         cursor.close()
 
+    @overload # fetch one row as tuple
     @staticmethod
     def query(
         query: str,
-        args: Union[tuple, dict] = [],
+        args: Optional[Union[tuple, dict]],
+        *,
+        fetchone: Literal[True],
+        returnrowcount: bool = False,
+        astuple: Literal[True],
+    ) -> tuple:
+        ...
+
+    @overload # fetch one row as dict
+    @staticmethod
+    def query(
+        query: str,
+        args: Optional[Union[tuple, dict]],
+        *,
+        fetchone: Literal[True],
+        returnrowcount: bool = False,
+        astuple: Literal[False],
+    ) -> dict:
+        ...
+
+    @overload # fetch all rows as tuple
+    @staticmethod
+    def query(
+        query: str,
+        args: Optional[Union[tuple, dict]],
+        *,
+        fetchone: bool = False,
+        returnrowcount: bool = False,
+        astuple: Literal[True] = True,
+    ) -> list[tuple]:
+        ...
+
+    @overload # fetch all rows as dict
+    @staticmethod
+    def query(
+        query: str,
+        args: Optional[Union[tuple, dict]],
+        *,
+        fetchone: bool = False,
+        returnrowcount: bool = False,
+        astuple: Literal[False] = False,
+    ) -> list[dict]:
+        ...
+
+    @staticmethod
+    def query(
+        query: str,
+        args: Optional[Union[tuple, dict]],
         *,
         fetchone: bool = False,
         returnrowcount: bool = False,
         astuple: bool = False,
-    ) -> Union[int, List[dict], dict]:
+    ) -> Union[int, list[dict], list[tuple], dict, tuple]:
         """
-        Faire une requête à la base de données du bot
+        Query the bot's database
 
-        Si SELECT, retourne une liste de résultats, ou seulement le premier résultat (si fetchone)
-        Pour toute autre requête, retourne l'ID de la ligne affectée, ou le nombre de lignes
-        affectées (si returnrowscount)
+        If SELECT, returns a list of results, or only the first result (if fetchone)
+        For all other queries, returns the ID of the affected row, or the number of affected rows
+            (if returnrowscount)
 
-        :param query: La requête à faire
-        :param args: Les arguments de la requête
-        :param fetchone: Si la requête est un SELECT, retourne seulement le premier résultat
-        :param returnrowcount: Si la requête est un INSERT, UPDATE ou DELETE, retourne le nombre
-            de lignes affectées
-        :param astuple: Si la requête est un SELECT, retourne les résultats sous forme de tuple
-        :return: Le résultat de la requête
+        :param query: The query to be performed
+        :param args: The query arguments
+        :param fetchone: If the query is a SELECT, returns only the first result
+        :param returnrowcount: If the query is an INSERT, UPDATE or DELETE, returns the number of
+            of affected rows
+        :param astuple: If the query is a SELECT, returns the results as a tuple instead of a dict
+        :return: The result of the query
         """
 
         cursor = Database.database.cursor()
         try:
-            cursor.execute(query, args)
+            cursor.execute(query, args or [])
             if query.startswith("SELECT"):
                 _type = tuple if astuple else dict
                 if fetchone:

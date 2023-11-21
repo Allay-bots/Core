@@ -55,6 +55,8 @@ class Sconfig(commands.Cog):
         cog: :class:`commands.Cog`
             The cog which got enabled"""
         self._add_options_from_cog(cog)
+        if cog.__cog_name__ not in self.sorted_options:
+            return
         for opt in self.sorted_options[cog.__cog_name__].values():
             # we enable the commands if needed
             if (command_name := opt.get("command")) and (

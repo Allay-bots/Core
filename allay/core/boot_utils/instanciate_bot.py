@@ -83,7 +83,7 @@ async def load_builtins(bot: Bot):
     notloaded = ""
     logs.info("📦 Loading builtins...")
 
-    for extension in allay.builtins.all:
+    for extension in allay.builtins.all_modules:
         try:
             await bot.load_extension("allay.builtins." + extension)
             loaded += 1
@@ -102,7 +102,7 @@ async def load_plugins(bot: Bot):
 
     logs.info("🔌 Loading plugins...")
 
-    for extension in allay.plugins.all:
+    for extension in allay.plugins.all_modules:
         try:
             await bot.load_extension("allay.plugins." + extension)
             loaded += 1

@@ -1,13 +1,12 @@
 
 # Standard libs ---------------------------------------------------------------
 
-import importlib
 import os
 
 # Modules ---------------------------------------------------------------------
 
 path = "allay/builtins"
-all = []
+all_modules: list[str] = []
 
 for plugin in os.listdir(path):
 
@@ -16,4 +15,4 @@ for plugin in os.listdir(path):
     if plugin.startswith("_"):
         continue
 
-    all.append(plugin)
+    all_modules.append(plugin)

@@ -25,11 +25,11 @@ i18n.set("fallback", "en")
 
 # Get all lang paths
 i18n.load_path.append("allay/core/langs")
-for plugin in allay.builtins.all:
+for plugin in allay.builtins.all_modules:
     plugin_path = os.path.join(allay.builtins.path, plugin, "langs")
     if os.path.isdir(plugin_path):
         i18n.load_path.append(plugin_path)
-for plugin in allay.plugins.all:
+for plugin in allay.plugins.all_modules:
     plugin_path = os.path.join(allay.plugins.path, plugin, "langs")
     if os.path.isdir(plugin_path):
         i18n.load_path.append(plugin_path)

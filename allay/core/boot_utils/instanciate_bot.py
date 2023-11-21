@@ -20,9 +20,9 @@ def instanciate_bot():
     )
 
     print(" ")
-    logs.info(f"▶️ Starting Allay Core v{allay.core.version}...")
+    logs.info(f"▶️ Starting Allay Core v{allay.core.__version__}...")
     print(" ")
-    print(art.text2art(f"Allay v{allay.core.version}",font='small',chr_ignore=True))
+    print(art.text2art(f"Allay v{allay.core.__version__}",font='small',chr_ignore=True))
 
     # On Discord Bot ready -----------------------------------------------------
 

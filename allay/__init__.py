@@ -1,9 +1,3 @@
-
-# Standard libs ---------------------------------------------------------------
-
-import os
-import sqlite3
-
 # Modules ---------------------------------------------------------------------
 
 from allay import builtins
@@ -19,3 +13,16 @@ from allay.core import Context
 from allay.core import Database
 from allay.core import GuildConfig
 from allay.core import I18N
+
+__all__ = [
+    "builtins",
+    "plugins",
+    "core",
+    "Bot",
+    "BotConfig",
+    "checks",
+    "Context",
+    "Database",
+    "GuildConfig",
+    "I18N",
+]

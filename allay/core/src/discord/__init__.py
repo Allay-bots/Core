@@ -1,8 +1,10 @@
-from allay.core.src.discord.bot import Bot
-from allay.core.src.discord.context import Context
-from allay.core.src.discord.guild_config import GuildConfig
+from . import utils
+from .bot import Bot
+from .context import Context
+from .guild_config import GuildConfig
 
 __all__ = [
+    "utils",
     "Bot",
     "Context",
     "GuildConfig",

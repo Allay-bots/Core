@@ -54,16 +54,28 @@ class BotConfig:
                 with open(file, encoding='utf-8') as file:
                     BotConfig.__global_config.update({"plugins":{plugin: yaml.safe_load(file)}})
 
-        # If a config already eixt -> overwrite the templates
+        # If a config already exist -> overwrite the templates
         if config_file_exist:
             with open("config.yaml", "r", encoding='utf-8') as file:
                 BotConfig.__global_config.update(yaml.safe_load(file))
 
-        # Otherwise, ask the user to setup the config
-        if not config_file_exist and setup_if_missing:
+        # Overwrite config with env variables
+        for key, value in os.environ.items():
+            path = key.lower().split("_")
+            if path[0] == "allay":
+                config = BotConfig.__global_config
+                for i in path[1:-1]:
+                    config = config[i]
+                config[path[-1]] = value
+
+        # Run setup script if some config are missing and setup_if_missing is True
+        # TODO : check if the config is fully set
+        if False:
             BotConfig.setup()
 
+        print(BotConfig.__global_config)
         # Save
+        # TODO : do not save env variables to config file
         BotConfig.save()
 
 

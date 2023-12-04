@@ -34,7 +34,6 @@ class BotConfig:
     # Global variables --------------------------------------------------------
 
     __global_config: dict[str, dict[str, Any]] = {}
-    __environment_used: bool = False
 
     # Loader ------------------------------------------------------------------
 
@@ -61,11 +60,11 @@ class BotConfig:
                 BotConfig.__global_config.update(yaml.safe_load(file))
 
         # Overwrite config with env variables
-        __environment_used = False
+        environment_used = False
         for key, value in os.environ.items():
             path = key.lower().split("_")
             if path[0] == "allay":
-                __environment_used = True
+                environment_used = True
                 config = BotConfig.__global_config
                 for i in path[1:-1]:
                     config = config[i]
@@ -73,7 +72,7 @@ class BotConfig:
 
         # Run setup script if config is missing, but not if env variables are set
         # and setup_if_missing is False
-        if (not config_file_exist) and (not __environment_used) and setup_if_missing:
+        if (not config_file_exist) and (not environment_used) and setup_if_missing:
             BotConfig.setup()
 
         # Save

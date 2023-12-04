@@ -34,6 +34,7 @@ class BotConfig:
     # Global variables --------------------------------------------------------
 
     __global_config: dict[str, dict[str, Any]] = {}
+    __environment_used: bool = False
 
     # Loader ------------------------------------------------------------------
 
@@ -60,22 +61,22 @@ class BotConfig:
                 BotConfig.__global_config.update(yaml.safe_load(file))
 
         # Overwrite config with env variables
+        __environment_used = False
         for key, value in os.environ.items():
             path = key.lower().split("_")
             if path[0] == "allay":
+                __environment_used = True
                 config = BotConfig.__global_config
                 for i in path[1:-1]:
                     config = config[i]
                 config[path[-1]] = value
 
-        # Run setup script if some config are missing and setup_if_missing is True
-        # TODO : check if the config is fully set
-        if False:
+        # Run setup script if config is missing, but not if env variables are set
+        # and setup_if_missing is False
+        if (not config_file_exist) and (not __environment_used) and setup_if_missing:
             BotConfig.setup()
 
-        print(BotConfig.__global_config)
         # Save
-        # TODO : do not save env variables to config file
         BotConfig.save()
 
 
@@ -85,6 +86,11 @@ class BotConfig:
         with open("config.yaml", "w", encoding='utf-8') as file:
             yaml.dump(BotConfig.__global_config, file)
 
+    # Environment -------------------------------------------------------------
+    @staticmethod
+    def is_token_environmentally_set():
+        "Check if the token is set in the environment variables"
+        return os.getenv("ALLAY_CORE_TOKEN") is not None
 
     # Setup -------------------------------------------------------------------
 
@@ -137,9 +143,8 @@ class BotConfig:
     #==============================================================================
 
     @staticmethod
-    def token_set(force_set=False):
-        """Check if the token is set, if not, ask for it. Return True if the token is set,
-        False if not."""
+    def token_set(force_set: bool = False):
+        """Check if the token is set, if not, ask for it."""
 
         if BotConfig.get("core.token") is not None and not force_set:
             choice = input(

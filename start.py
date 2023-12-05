@@ -8,9 +8,9 @@ utiliser, modifier et/ou redistribuer ce programme sous les conditions
 de la licence CeCILL diffusée sur le site "http://www.cecill.info".
 """
 
-#==============================================================================
+# ==============================================================================
 # Check & import requirements
-#==============================================================================
+# ==============================================================================
 
 # Standard libs ---------------------------------------------------------------
 
@@ -30,9 +30,9 @@ from LRFutils import logs
 import allay
 from allay.core.boot_utils.instanciate_bot import instanciate_bot
 
-#==============================================================================
+# ==============================================================================
 # START
-#==============================================================================
+# ==============================================================================
 
 bot = instanciate_bot()
 
@@ -44,6 +44,10 @@ try:
     )
 except discord.errors.LoginFailure:
     logs.error("⚠️ Invalid token")
-    allay.BotConfig.token_set(force_set=True)
-    os.system("python3 start.py")
+    if not allay.BotConfig.is_token_environmentally_set():
+        allay.BotConfig.token_set(force_set=True)
+        os.system("python3 start.py")
+    else:
+        logs.warn("⚠️ Token is set as an environment variable. Please check your .env file for ALLAY_CORE_TOKEN "
+                  "variable.")
     sys.exit()

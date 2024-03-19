@@ -42,6 +42,7 @@ class BotConfig:
         "Check basic requirements and start the setup script if something is missing"
 
         plugin_path = "allay/plugins"
+        builtins_path = "allay/builtins"
         config_file_exist = os.path.isfile("config.yaml")
 
         # Load config template
@@ -50,9 +51,15 @@ class BotConfig:
 
         # Load plugin config template
         for plugin in os.listdir(plugin_path):
-            if os.path.isfile(file := plugin_path + plugin + "/config.yaml"):
+            if os.path.isfile(file := plugin_path + "/" + plugin + "/config.yaml"):
                 with open(file, encoding='utf-8') as file:
                     BotConfig.__global_config.update({"plugins":{plugin: yaml.safe_load(file)}})
+
+        # Load builtins config template
+        for builtin in os.listdir(builtins_path):
+            if os.path.isfile(file := builtins_path + "/" + builtin + "/config.yaml"):
+                with open(file, encoding='utf-8') as file:
+                    BotConfig.__global_config.update({"builtins":{builtin: yaml.safe_load(file)}})
 
         # If a config already exist -> overwrite the templates
         if config_file_exist:

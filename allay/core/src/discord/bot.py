@@ -37,6 +37,7 @@ class Bot(commands.bot.AutoShardedBot):
             status: Optional[discord.Status] = None,
         ):
         intents = discord.Intents.default()
+        intents.presences = True
         intents.message_content = True
         intents.members = True
 

@@ -25,7 +25,9 @@ check_requirements()
 # Thrid party libs ------------------------------------------------------------
 
 import discord
-from LRFutils import logs
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 import allay
 from allay.core.boot_utils.instanciate_bot import instanciate_bot
@@ -43,11 +45,11 @@ try:
         log_handler=logging.StreamHandler(sys.stdout)
     )
 except discord.errors.LoginFailure:
-    logs.error("⚠️ Invalid token")
+    logger.error("⚠️ Invalid token")
     if not allay.BotConfig.is_token_environmentally_set():
         allay.BotConfig.token_set(force_set=True)
         os.system("python3 start.py")
     else:
-        logs.warn("⚠️ Token is set as an environment variable. Please check your .env file for ALLAY_CORE_TOKEN "
-                  "variable.")
+        logger.warning("⚠️ Token is set as an environment variable. Please check your .env file for ALLAY_CORE_TOKEN "
+                       "variable.")
     sys.exit()

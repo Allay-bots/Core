@@ -7,7 +7,9 @@
 
 # Third party libs ------------------------------------------------------------
 
-from LRFutils import logs
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Project modules -------------------------------------------------------------
 
@@ -29,6 +31,6 @@ NAME = "Server Config"
 
 async def setup(bot: allay.Bot):
     "Load cogs related to server configuration"
-    logs.info(f"Loading {ICON} {NAME} v{VERSION}...")
+    logger.info(f"Loading {ICON} {NAME} v{VERSION}...")
     await bot.add_cog(ConfigCog(bot), icon=ICON, display_name=NAME)
     await bot.add_cog(Sconfig(bot), icon=ICON, display_name=NAME)

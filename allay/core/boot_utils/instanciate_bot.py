@@ -2,10 +2,12 @@ import asyncio
 
 import art
 import discord
-from LRFutils import color, logs
+import logging
 
 import allay
 from allay.core.src.discord import Bot
+
+logger = logging.getLogger(__name__)
 
 
 def instanciate_bot():
@@ -24,7 +26,7 @@ def instanciate_bot():
     )
 
     print(" ")
-    logs.info(f"▶️ Starting Allay Core v{allay.core.__version__}...")
+    logger.info(f"▶️ Starting Allay Core v{allay.core.__version__}...")
     print(" ")
     print(art.text2art(f"Allay v{allay.core.__version__}",font='small',chr_ignore=True))
 
@@ -44,18 +46,18 @@ async def on_bot_ready(bot: Bot):
 
     # Show bot informations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    logs.info(color.green("✅ Bot connected"))
+    logger.info("✅ Bot connected")
     if bot.user:
-        logs.info(f"Username: {bot.user.name}")
-        logs.info(f"User ID: {bot.user.id}")
+        logger.info(f"Username: {bot.user.name}")
+        logger.info(f"User ID: {bot.user.id}")
     else:
-        logs.info("No user connected")
+        logger.info("No user connected")
 
     if len(bot.guilds) < 20:
-        logs.info(f"Connected on {len(bot.guilds)} server:\n - " +
+        logger.info(f"Connected on {len(bot.guilds)} server:\n - " +
                 '\n - '.join(x.name for x in bot.guilds))
     else:
-        logs.info(f"Connected on {len(bot.guilds)} server")
+        logger.info(f"Connected on {len(bot.guilds)} server")
 
     # Load plugins ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -67,13 +69,13 @@ async def on_bot_ready(bot: Bot):
 
     # Sync app commands ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    logs.info("♻️ Syncing app commands...")
+    logger.info("♻️ Syncing app commands...")
     try:
         await bot.tree.sync()
     except discord.DiscordException as e:
-        logs.error("⚠️ Error while syncing app commands: %s", repr(e))
+        logger.error("⚠️ Error while syncing app commands: %s", repr(e))
     else:
-        logs.info("✅ App commands synced")
+        logger.info("✅ App commands synced")
 
     print("--------------------------------------------------------------------------------")
 
@@ -85,18 +87,18 @@ async def load_builtins(bot: Bot):
     loaded = 0
     failed = 0
     notloaded = ""
-    logs.info("📦 Loading builtins...")
+    logger.info("📦 Loading builtins...")
 
     for extension in allay.builtins.all_modules:
         try:
             await bot.load_extension("allay.builtins." + extension)
             loaded += 1
         except Exception as exc:  # pylint: disable=broad-except
-            logs.error(f"Failed to load extension: {extension}\n{exc}")
+            logger.error(f"Failed to load extension: {extension}\n{exc}")
             notloaded += "\n - " + extension
             failed += 1
 
-    logs.info(f"{loaded} builtins loaded, {failed} builtins failed")
+    logger.info(f"{loaded} builtins loaded, {failed} builtins failed")
 
 async def load_plugins(bot: Bot):
     "Load installed plugins"
@@ -104,15 +106,15 @@ async def load_plugins(bot: Bot):
     failed = 0
     notloaded = ""
 
-    logs.info("🔌 Loading plugins...")
+    logger.info("🔌 Loading plugins...")
 
     for extension in allay.plugins.all_modules:
         try:
             await bot.load_extension("allay.plugins." + extension)
             loaded += 1
         except Exception as exc:  # pylint: disable=broad-except
-            logs.error(f"Failed to load extension: {extension}\n{exc}")
+            logger.error(f"Failed to load extension: {extension}\n{exc}")
             notloaded += "\n - " + extension
             failed += 1
 
-    logs.info(f"{loaded} plugins loaded, {failed} plugins failed")
+    logger.info(f"{loaded} plugins loaded, {failed} plugins failed")

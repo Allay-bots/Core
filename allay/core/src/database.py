@@ -127,7 +127,7 @@ class Database:
         cursor = Database.database.cursor()
         try:
             cursor.execute(query, args or [])
-            if query.startswith("SELECT"):
+            if query.startswith("SELECT") or query.startswith("PRAGMA"):
                 _type = tuple if astuple else dict
                 if fetchone:
                     row = cursor.fetchone()

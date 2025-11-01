@@ -37,10 +37,8 @@ class Bot(commands.bot.AutoShardedBot):
             database: sqlite3.Connection,
             case_insensitive: Optional[bool] = None,
             status: Optional[discord.Status] = None,
+            intents: Optional[discord.Intents] = discord.Intents.default(),
         ):
-        intents = discord.Intents.default()
-        intents.message_content = True
-        intents.members = True
 
         super().__init__(
             command_prefix=lambda bot, msg: self.get_prefix(msg),

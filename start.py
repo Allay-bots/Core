@@ -26,7 +26,10 @@ check_requirements()
 
 import discord
 
-logging.basicConfig(level=logging.DEBUG)
+if os.getenv("DEBUG"):
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 import allay

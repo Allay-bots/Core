@@ -12,9 +12,7 @@ from typing import Optional, Union, TYPE_CHECKING
 
 import discord
 from discord.ext import commands
-import logging
-
-logger = logging.getLogger(__name__)
+from LRFutils import logs
 
 if TYPE_CHECKING:
     from allay.builtins.server_config import Sconfig, ConfigManager
@@ -39,6 +37,7 @@ class Bot(commands.bot.AutoShardedBot):
             status: Optional[discord.Status] = None,
         ):
         intents = discord.Intents.default()
+        intents.presences = True
         intents.message_content = True
         intents.members = True
 
@@ -148,7 +147,7 @@ class Bot(commands.bot.AutoShardedBot):
             return f"</{command_name}:{command.id}>"
         if command := self.get_command(command_name):
             return f"`{command.qualified_name}`"
-        logger.error(f"Trying to mention invalid command: {command_name}")
+        logs.error(f"Trying to mention invalid command: {command_name}")
         return f"`{command_name}`"
 
     # pylint: disable=arguments-differ
@@ -176,7 +175,7 @@ class Bot(commands.bot.AutoShardedBot):
                         module.on_anycog_load(cog) # type: ignore
                     # pylint: disable=broad-exception-caught
                     except BaseException as err:
-                        logger.error(f"Error while calling on_anycog_load: {err}")
+                        logs.error(f"Error while calling on_anycog_load: {err}")
 
     def get_cog_display_name(self, cog_id: str):
         "Get the display name of a given cog"
@@ -210,4 +209,4 @@ class Bot(commands.bot.AutoShardedBot):
                         module.on_anycog_unload(cog) # type: ignore
                     # pylint: disable=broad-exception-caught
                     except BaseException as err:
-                        logger.error(f"Error while calling on_anycog_unload: {err}")
+                        logs.error(f"Error while calling on_anycog_unload: {err}")

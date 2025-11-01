@@ -3,6 +3,7 @@ import asyncio
 import art
 import discord
 import logging
+import importlib
 
 import allay
 from allay.core.src.discord import Bot
@@ -23,6 +24,7 @@ def instanciate_bot():
         database=allay.Database.database,
         case_insensitive=True,
         status=discord.Status.do_not_disturb,
+        intents=get_plugins_intents(),
     )
 
     print(" ")
@@ -118,3 +120,18 @@ async def load_plugins(bot: Bot):
             failed += 1
 
     logger.info(f"{loaded} plugins loaded, {failed} plugins failed")
+
+def get_plugins_intents():
+    # retrieve required intents from plugins
+    logger.debug("Retrieving necessary intents from plugins")
+    intents = discord.Intents.default()
+    # import all plugins
+    for extension in allay.plugins.all_modules:
+        try:
+            module = importlib.import_module(f"allay.plugins.{extension}")
+            if hasattr(module, "required_intents"):
+                for intent in module.required_intents:
+                    logger.debug(f"{extension} requires the '{intent}' intent.")
+                    setattr(intents, intent, True)
+        except ImportError as e:
+            logger.error(f"Failed to load extension {extension}: {e}")

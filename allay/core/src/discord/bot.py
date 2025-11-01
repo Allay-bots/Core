@@ -12,7 +12,9 @@ from typing import Optional, Union, TYPE_CHECKING
 
 import discord
 from discord.ext import commands
-from LRFutils import logs
+import logging
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from allay.builtins.server_config import Sconfig, ConfigManager
@@ -35,11 +37,8 @@ class Bot(commands.bot.AutoShardedBot):
             database: sqlite3.Connection,
             case_insensitive: Optional[bool] = None,
             status: Optional[discord.Status] = None,
+            intents: Optional[discord.Intents] = discord.Intents.default(),
         ):
-        intents = discord.Intents.default()
-        intents.presences = True
-        intents.message_content = True
-        intents.members = True
 
         super().__init__(
             command_prefix=lambda bot, msg: self.get_prefix(msg),
@@ -147,7 +146,7 @@ class Bot(commands.bot.AutoShardedBot):
             return f"</{command_name}:{command.id}>"
         if command := self.get_command(command_name):
             return f"`{command.qualified_name}`"
-        logs.error(f"Trying to mention invalid command: {command_name}")
+        logger.error(f"Trying to mention invalid command: {command_name}")
         return f"`{command_name}`"
 
     # pylint: disable=arguments-differ
@@ -175,7 +174,7 @@ class Bot(commands.bot.AutoShardedBot):
                         module.on_anycog_load(cog) # type: ignore
                     # pylint: disable=broad-exception-caught
                     except BaseException as err:
-                        logs.error(f"Error while calling on_anycog_load: {err}")
+                        logger.error(f"Error while calling on_anycog_load: {err}")
 
     def get_cog_display_name(self, cog_id: str):
         "Get the display name of a given cog"
@@ -209,4 +208,4 @@ class Bot(commands.bot.AutoShardedBot):
                         module.on_anycog_unload(cog) # type: ignore
                     # pylint: disable=broad-exception-caught
                     except BaseException as err:
-                        logs.error(f"Error while calling on_anycog_unload: {err}")
+                        logger.error(f"Error while calling on_anycog_unload: {err}")
